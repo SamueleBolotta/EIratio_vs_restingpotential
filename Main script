@@ -1,0 +1,81 @@
+% Simulates synaptic excitation and inhibition, as driven by glutamate
+% and chloride:
+% - At various holding potentials between -70mV and 0mV
+% - At various ratios between E and I
+%% Units
+% Voltage is in millivolts (mV)
+% Current is in microamperes (uA)
+% Conductance is in millisiemens (mS)
+% Time is in milliseconds (ms)
+
+%% Read all inputs and store them
+G_max_chl = 80;                          % Maximal conductance of Chl
+G_max_glu = 15;                          % Maximal conductance of Glu
+Vm = -70:10:0;                           % Array of holding potentials
+EGlu = 0;                                % Reversal potential of Glu
+EChl = -70;                              % Reversal potential of Chl
+Drforces_I = Vm - EChl;                  % Array of driving forces for I
+Drforces_E = Vm - EGlu;                  % Array of driving forces for E
+ratio = 3:1:7;                           % Array of ratios between E and I
+tau_rise_Ex = 0.73;                      % Tau rise for E
+tau_rise_In = 0.44;                      % Tau rise for I
+tau_decay_Ex = 3;                        % Tau decay for E
+tau_decay_In = tau_decay_Ex .* ratio;    % Tau decay for I
+tmax = 120;                              % Duration of experiment
+
+%% Initialize time
+dt = 0.1;     % time step duration (ms)
+t = 0:dt:tmax-dt;
+
+%Variables for plotting
+[~,colnum] = size(Drforces_I);
+[rownum2,colnum2] = size(ratio);
+niter = ceil(tmax/dt); %total number of time steps in the experiment
+t_plot = (0:niter-1)*dt; % Plot time
+
+%% Activation variables
+m_plot_I = 1 - exp(-t / tau_rise_In); % Activation
+m_plot_E = 1 - exp(-t / tau_rise_Ex); % Activation
+
+%Inactivation variable
+h_plot_E = exp(-t / tau_decay_Ex); % Inactivation
+
+%Excitatory variables
+gat_E = m_plot_E .* h_plot_E; % Excitatory
+Ge = G_max_glu .* gat_E; % Excitatory
+
+for rat = 1:colnum2  % For each of the different ratios between I and E currents
+    % Update gating variables for inhibition
+    h_plot_I = exp(-t / tau_decay_In(1,rat)); % Inactivation
+    gat_I = m_plot_I .* h_plot_I; % Inhibitory
+    Gi = G_max_chl .* gat_I; % Inhibitory conductance
+    
+    % Calculate currents
+    for vol = 1:colnum
+        if vol == 1
+            IPSC = Gi * Drforces_I(1,vol);
+            EPSC = Ge * Drforces_E(1,vol);
+            CPSC = IPSC + EPSC;
+        else
+            IPSC = [IPSC, Gi * Drforces_I(1,vol)];
+            EPSC = [EPSC, Ge * Drforces_E(1,vol)];
+            CPSC = IPSC + EPSC;
+        end        
+    end
+    
+    %% Store everything in matrices
+    if rat == 1
+        currents = [IPSC;EPSC;CPSC];
+        gating_inhibition = [m_plot_I;h_plot_I]; % Put gating variables in a single matrix
+        gating_excitation = [m_plot_E;h_plot_E]; % Put gating variables in a single matrix
+        conductances = [Gi;Ge]; % Put conductances in a single matrix
+    else
+        currents = [currents, [IPSC;EPSC;CPSC]];
+        gating_inhibition = [gating_inhibition, [m_plot_I;h_plot_I]]; % Put gating variables in a single matrix
+        gating_excitation = [gating_excitation, [m_plot_E;h_plot_E]]; % Put gating variables in a single matrix
+        conductances = [conductances, [Gi;Ge]]; % Put conductances in a single matrix
+    end
+end
+
+%% Plotting
+plots
