@@ -1,0 +1,57 @@
+%Counters for first for loop
+hh = 1;
+zz = tmax*10;
+%Counters for second for loop
+hh1 = 1;
+zz1 = tmax*10;
+
+for rat = 1:colnum2
+    figure
+    t = tiledlayout(4,2,'TileSpacing','Compact');
+    for vol = 1:colnum
+        nexttile
+        plot(t_plot, currents(:,hh:zz), 'linewidth',2);
+        legend('IPSC', 'EPSC', 'CPSC');
+        str = sprintf('Currents at %d mV; ratio I-E: %d ', Vm(1,vol),ratio(rat));
+        title(str)
+        xlabel(t,'Time(msec)', 'fontsize',17 ...
+            )
+        ylabel(t,'Picoampere (pA)', 'fontsize', 17)
+        
+        hh = hh + niter;
+        zz = zz + niter;
+    end
+    
+    figure
+    subplot(3,1,1)
+    % Plot gating variables for inhibition
+    plot(t_plot/2, gating_inhibition(:,hh1:zz1), 'linewidth',2);
+    legend('mI', 'hI');
+    title(['Activation (m) and inactivation (h) variables for inhibition'])
+    subtitle(['I is ', num2str(ratio(rat)), ' times slower than E'])
+    xlabel('Time(msec)', 'fontsize', 10)
+    ylabel('-', 'fontsize', 10);
+    
+    subplot(3,1,2)
+    % Plot gating variables for excitation
+    plot(t_plot/2, gating_excitation(:,hh1:zz1), 'linewidth',2);
+    legend('mE', 'hE');
+    title("Activation (m) and inactivation (h) variables for excitation")
+    subtitle(['I is ', num2str(ratio(rat)), ' times slower than E'])
+    xlabel('Time(msec)', 'fontsize', 10)
+    ylabel('-', 'fontsize', 10);
+    0.0002;
+    
+    subplot(3,1,3)
+    % Plot conductances
+    plot(t_plot/2,conductances(:,hh1:zz1),'linewidth',2);
+    legend('Gi', 'Ge')
+    title("Inhibitory and excitatory conductances")
+    subtitle(['I is ', num2str(ratio(rat)), ' times slower than E'])
+    xlabel('Time(msec)', 'fontsize', 10)
+    ylabel('Millisiemens (mS)', 'fontsize', 10);
+    
+    hh1 = hh1 + niter;
+    zz1 = zz1 + niter;
+    
+end
